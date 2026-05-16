@@ -6,36 +6,122 @@
   <title>Find Your Property in Malta | EstateFlow</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .card { background: #1e293b; border-radius: 16px; padding: 40px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
-    h1 { font-size: 1.8rem; margin-bottom: 6px; }
-    p.sub { color: #94a3b8; margin-bottom: 28px; font-size: 0.95rem; }
-    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; margin-top: 16px; }
-    input, select, textarea { width: 100%; padding: 12px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: #3b82f6; }
-    select option { background: #1e293b; }
-    textarea { resize: vertical; min-height: 80px; }
-    button { margin-top: 24px; width: 100%; padding: 14px; background: #3b82f6; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #2563eb; }
-    button:disabled { background: #334155; cursor: not-allowed; }
-    .success { display: none; text-align: center; padding: 30px 0; }
-    .success h2 { margin-bottom: 8px; }
-    .success p { color: #94a3b8; }
-    .error-msg { color: #f87171; font-size: 0.85rem; margin-top: 12px; display: none; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+    }
+    p.sub {
+      color: #94a3b8;
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #3b82f6;
+    }
+    select option {
+      background: #1e293b;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button {
+      margin-top: 24px;
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button:disabled {
+      background: #334155;
+      cursor: not-allowed;
+    }
+    .success {
+      display: none;
+      text-align: center;
+      padding: 30px 0;
+    }
+    .success svg {
+      width: 60px;
+      height: 60px;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+    .success h2 {
+      margin-bottom: 8px;
+    }
+    .success p {
+      color: #94a3b8;
+    }
+    .error-msg {
+      color: #f87171;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <div id="form-section">
-      <h1>Find Your Home in Malta</h1>
+      <h1>🏡 Find Your Home in Malta</h1>
       <p class="sub">Fill in your details and we'll match you with the perfect property.</p>
+
       <form id="lead-form">
         <label>Full Name *</label>
         <input type="text" name="name" placeholder="John Borg" required>
+
         <label>Email *</label>
         <input type="email" name="email" placeholder="john@example.com" required>
+
         <label>Phone</label>
         <input type="tel" name="phone" placeholder="+356 9999 9999">
+
         <label>I'm looking for</label>
         <select name="interest">
           <option value="">-- Select --</option>
@@ -44,65 +130,34 @@
           <option value="rent-short">Short-term rental</option>
           <option value="invest">Investment property</option>
         </select>
+
         <label>Budget (monthly/total)</label>
         <select name="budget">
           <option value="">-- Select --</option>
-          <option value="under-800">Under 800 EUR/mo</option>
-          <option value="800-1500">800 - 1500 EUR/mo</option>
-          <option value="1500-3000">1500 - 3000 EUR/mo</option>
-          <option value="over-3000">Over 3000 EUR/mo</option>
-          <option value="under-200k">Buy under 200K EUR</option>
-          <option value="200k-400k">Buy 200K - 400K EUR</option>
-          <option value="over-400k">Buy over 400K EUR</option>
+          <option value="under-800">Under €800/mo</option>
+          <option value="800-1500">€800 – €1,500/mo</option>
+          <option value="1500-3000">€1,500 – €3,000/mo</option>
+          <option value="over-3000">Over €3,000/mo</option>
+          <option value="under-200k">Buy under €200K</option>
+          <option value="200k-400k">Buy €200K – €400K</option>
+          <option value="over-400k">Buy over €400K</option>
         </select>
+
         <label>Message (optional)</label>
         <textarea name="message" placeholder="Any specific requirements, preferred area, etc."></textarea>
-        <div class="error-msg" id="error-msg">Something went wrong. Please try again.</div>
-        <button type="submit" id="submit-btn">Send My Request</button>
+
+        <div id="error-msg" class="error-msg">
+          Something went wrong. Please try again.
+        </div>
+
+        <button id="submit-btn" type="submit">Send My Request →</button>
       </form>
     </div>
-    <div class="success" id="success-section">
+
+    <div id="success-section" class="success">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+        <path d="M8 12.5L10.5 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
       <h2>Request Received!</h2>
-      <p>We'll be in touch within 24 hours.<br>Check your email for confirmation.</p>
-    </div>
-  </div>
-  <script>
-    var WEBHOOK = 'https://phzogngddxzryubqhszd.supabase.co/functions/v1/lead-webhook';
-    document.getElementById('lead-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      var btn = document.getElementById('submit-btn');
-      var errMsg = document.getElementById('error-msg');
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-      errMsg.style.display = 'none';
-      var fd = new FormData(e.target);
-      var payload = {
-        name: fd.get('name'),
-        email: fd.get('email'),
-        phone: fd.get('phone'),
-        interest: fd.get('interest'),
-        budget: fd.get('budget'),
-        message: fd.get('message'),
-        source: 'external-form'
-      };
-      try {
-        var res = await fetch(WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          document.getElementById('form-section').style.display = 'none';
-          document.getElementById('success-section').style.display = 'block';
-        } else {
-          throw new Error('Server error');
-        }
-      } catch(err) {
-        errMsg.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Send My Request';
-      }
-    });
-  </script>
-</body>
-</html>
+      <p>We'll 
