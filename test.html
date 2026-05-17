@@ -1,0 +1,319 @@
+// src/modules/form/ExternalForm.tsx
+import React, { useState } from 'react';
+import { clientRepo }   from '../../db/repos';
+import { activityRepo } from '../../db/repos';
+import { useAppStore }  from '../../store/useAppStore';
+import { useToast }     from '../../ui/Toast';
+import type { LeadFormPayload, ClientStatus } from '../../db/schema';
+
+const EMPTY: LeadFormPayload = {
+  name: '', email: '', phone: '', nationality: '',
+  age: 25, sex: 'M', budget: 900,
+  location: '', entry_date: '', pets: false, share: true, notes: '',
+};
+
+const S: Record<string, React.CSSProperties> = {
+  page:    { maxWidth: 600, margin: '0 auto', paddingTop: 20 },
+  title:   { fontSize: 28, color: '#c8f542', letterSpacing: -0.5, marginBottom: 6 },
+  sub:     { fontSize: 12, color: '#5a5866', marginBottom: 28 },
+  fGroup:  { display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 },
+  label:   { fontSize: 11, color: '#5a5866', letterSpacing: '1px', textTransform: 'uppercase' },
+  fInput:  { padding: '8px 12px', background: '#1e1e24', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#e8e6e1', fontFamily: 'monospace', fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' },
+  fGrid:   { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
+  btnPrim: { padding: '8px 18px', borderRadius: 8, border: '1px solid #c8f542', background: '#c8f542', color: '#111', fontFamily: 'monospace', fontSize: 12, cursor: 'pointer', fontWeight: 500 },
+  btn:     { padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: '#1e1e24', color: '#e8e6e1', fontFamily: 'monospace', fontSize: 12, cursor: 'pointer' },
+  step:    { height: 3, borderRadius: 2, flex: 1, transition: 'background 0.2s' },
+  errBox:  { background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#f87171', marginBottom: 16 },
+};
+
+interface ExternalFormProps { mode?: 'wizard' | 'onepage'; onSuccess?: () => void; }
+
+const ExternalForm: React.FC<ExternalFormProps> = ({ mode = 'wizard', onSuccess }) => {
+  const upsertClient = useAppStore(s => s.upsertClient);
+  const addActivity  = useAppStore(s => s.addActivity);
+  const { toast }    = useToast();
+
+  const [form, setForm]         = useState<LeadFormPayload>(EMPTY);
+  const [step, setStep]         = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const set = <K extends keyof LeadFormPayload>(k: K, v: LeadFormPayload[K]) =>
+    setForm(f => ({ ...f, [k]: v }));
+
+  // ── Upsert diretto via repo (nessun webhook HTTP interno) ─────────
+  // Il form interno alla dashboard scrive direttamente nel repo,
+  // che sia mock o Supabase. Il webhook HTTP è solo per embed esterni.
+  const submit = async () => {
+    if (!form.name.trim() || !form.email.trim()) {
+      setSubmitError('Nome e email sono obbligatori.');
+      return;
+    }
+    setSubmitError(null);
+    setLoading(true);
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const email = form.email.trim().toLowerCase();
+
+      // Cerca se il cliente esiste già per email
+      const all      = await clientRepo.getAll();
+      const existing = all.find(c => c.email.toLowerCase() === email);
+
+      let action: 'created' | 'updated';
+      let clientId: string;
+
+      if (existing) {
+        // Aggiorna — non degrada lo status se già active
+        const newStatus: ClientStatus =
+          existing.status === 'prospect' ? 'active' : existing.status;
+
+        const updated = await clientRepo.update(existing.id, {
+          name:        form.name.trim(),
+          phone:       form.phone,
+          nationality: form.nationality,
+          age:         form.age,
+          sex:         form.sex,
+          budget:      form.budget,
+          location:    form.location,
+          entry_date:  form.entry_date,
+          pets:        form.pets,
+          share:       form.share,
+          notes:       form.notes,
+          status:      newStatus,
+        });
+        upsertClient(updated);
+        action   = 'updated';
+        clientId = updated.id;
+      } else {
+        // Crea nuovo cliente come prospect
+        const created = await clientRepo.create({
+          name:        form.name.trim(),
+          email,
+          phone:       form.phone,
+          nationality: form.nationality,
+          age:         form.age,
+          sex:         form.sex,
+          budget:      form.budget,
+          location:    form.location,
+          entry_date:  form.entry_date,
+          pets:        form.pets,
+          share:       form.share,
+          notes:       form.notes,
+          status:      'prospect',
+          group_ids:   [],
+        });
+        upsertClient(created);
+        action   = 'created';
+        clientId = created.id;
+      }
+
+      // Registra attività nel log
+      const activity = await activityRepo.create({
+        type:        'contact',
+        client_id:   clientId,
+        description: action === 'created'
+          ? `Nuova richiesta via form: ${form.name.trim()}`
+          : `Profilo aggiornato via form: ${form.name.trim()}`,
+        date:       today,
+        created_by: 'Form',
+      });
+      addActivity(activity);
+
+      toast.success(action === 'created' ? 'Richiesta inviata!' : 'Profilo aggiornato!');
+      setSubmitted(true);
+      onSuccess?.();
+
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Errore sconosciuto';
+      setSubmitError(msg);
+      toast.error('Errore durante l\'invio: ' + msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Schermata di conferma ─────────────────────────────────────────
+  if (submitted) return (
+    <div style={{ ...S.page, textAlign: 'center', paddingTop: 80 }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
+      <div style={{ ...S.title, textAlign: 'center' }}>Richiesta inviata</div>
+      <div style={S.sub}>Sarai ricontattato entro 24 ore.</div>
+      <button style={S.btn} onClick={() => {
+        setSubmitted(false);
+        setForm(EMPTY);
+        setStep(1);
+        setSubmitError(null);
+      }}>
+        Nuova richiesta
+      </button>
+    </div>
+  );
+
+  // ── Componenti campo riutilizzabili ───────────────────────────────
+  const Field = ({ label, k, type = 'text', placeholder }: {
+    label: string; k: keyof LeadFormPayload; type?: string; placeholder?: string;
+  }) => (
+    <div style={S.fGroup}>
+      <label style={S.label as React.CSSProperties}>{label}</label>
+      <input
+        type={type}
+        style={S.fInput}
+        placeholder={placeholder}
+        value={String(form[k])}
+        onChange={e => set(k, (type === 'number' ? +e.target.value : e.target.value) as LeadFormPayload[typeof k])}
+      />
+    </div>
+  );
+
+  const SelectField = ({ label, k, options }: {
+    label: string; k: keyof LeadFormPayload; options: [string, string][];
+  }) => (
+    <div style={S.fGroup}>
+      <label style={S.label as React.CSSProperties}>{label}</label>
+      <select
+        style={S.fInput}
+        value={String(form[k])}
+        onChange={e => set(k, e.target.value as LeadFormPayload[typeof k])}
+      >
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </div>
+  );
+
+  // ── Versione one-page ─────────────────────────────────────────────
+  if (mode === 'onepage') return (
+    <div style={S.page}>
+      <div style={S.title}>EstateFlow</div>
+      <div style={S.sub}>Compila il form per trovare la tua soluzione abitativa ideale.</div>
+      {submitError && <div style={S.errBox}>{submitError}</div>}
+      <div style={S.fGrid}>
+        <Field label="Nome *"       k="name"        placeholder="Mario Rossi" />
+        <Field label="Email *"      k="email"       type="email" placeholder="mario@email.com" />
+        <Field label="Telefono"     k="phone"       placeholder="+39 333..." />
+        <Field label="Nazionalità"  k="nationality" placeholder="IT" />
+        <Field label="Età"          k="age"         type="number" />
+        <SelectField label="Sesso"  k="sex"         options={[['M','Maschio'],['F','Femmina'],['O','Altro']]} />
+        <Field label="Budget (€/mo)" k="budget"    type="number" />
+        <Field label="Location"     k="location"    placeholder="Sliema, St Julians..." />
+        <Field label="Data entrata" k="entry_date"  type="date" />
+        <SelectField label="Animali domestici" k="pets" options={[['false','No'],['true','Sì']]} />
+        <div style={{ ...S.fGroup, gridColumn: '1/-1' }}>
+          <label style={S.label as React.CSSProperties}>Disponibile a condividere?</label>
+          <select style={S.fInput} value={form.share ? 'yes' : 'no'} onChange={e => set('share', e.target.value === 'yes')}>
+            <option value="yes">Sì, disponibile a condivisione</option>
+            <option value="no">No, voglio un appartamento indipendente</option>
+          </select>
+        </div>
+        <div style={{ ...S.fGroup, gridColumn: '1/-1' }}>
+          <label style={S.label as React.CSSProperties}>Note aggiuntive</label>
+          <textarea
+            style={{ ...S.fInput, minHeight: 80, resize: 'vertical' }}
+            value={form.notes}
+            onChange={e => set('notes', e.target.value)}
+            placeholder="Parcheggio, arredato, animali..."
+          />
+        </div>
+      </div>
+      <button style={{ ...S.btnPrim, opacity: loading ? 0.7 : 1 }} onClick={submit} disabled={loading}>
+        {loading ? 'Invio in corso...' : 'Invia richiesta ✓'}
+      </button>
+    </div>
+  );
+
+  // ── Wizard 3 step ─────────────────────────────────────────────────
+  return (
+    <div style={S.page}>
+      <div style={S.title}>EstateFlow</div>
+      <div style={S.sub}>Compila il form per trovare la tua soluzione abitativa ideale.</div>
+
+      {/* Barra progresso */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
+        {[1, 2, 3].map(s => (
+          <div key={s} style={{ ...S.step, background: s <= step ? '#c8f542' : '#1e1e24' }} />
+        ))}
+      </div>
+
+      {/* Step 1 — Dati personali */}
+      {step === 1 && (
+        <div style={S.fGrid}>
+          <Field label="Nome *"      k="name"        placeholder="Mario Rossi" />
+          <Field label="Email *"     k="email"       type="email" placeholder="mario@email.com" />
+          <Field label="Telefono"    k="phone"       placeholder="+39 333..." />
+          <Field label="Nazionalità" k="nationality" placeholder="IT" />
+          <Field label="Età"         k="age"         type="number" />
+          <SelectField label="Sesso" k="sex"         options={[['M','Maschio'],['F','Femmina'],['O','Altro']]} />
+        </div>
+      )}
+
+      {/* Step 2 — Preferenze alloggio */}
+      {step === 2 && (
+        <div style={S.fGrid}>
+          <Field label="Budget (€/mo)"  k="budget"     type="number" />
+          <Field label="Location preferita" k="location" placeholder="Sliema, St Julians..." />
+          <Field label="Data di entrata"    k="entry_date" type="date" />
+          <SelectField label="Animali domestici" k="pets" options={[['false','No'],['true','Sì']]} />
+          <div style={{ ...S.fGroup, gridColumn: '1/-1' }}>
+            <label style={S.label as React.CSSProperties}>Disponibile a condividere?</label>
+            <select style={S.fInput} value={form.share ? 'yes' : 'no'} onChange={e => set('share', e.target.value === 'yes')}>
+              <option value="yes">Sì, disponibile a condivisione</option>
+              <option value="no">No, voglio un appartamento indipendente</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — Note + riepilogo */}
+      {step === 3 && (
+        <div>
+          <div style={S.fGroup}>
+            <label style={S.label as React.CSSProperties}>Requisiti aggiuntivi</label>
+            <textarea
+              style={{ ...S.fInput, minHeight: 100, resize: 'vertical' }}
+              value={form.notes}
+              onChange={e => set('notes', e.target.value)}
+              placeholder="Parcheggio, arredato, piano alto, vicino al mare..."
+            />
+          </div>
+          {/* Riepilogo */}
+          <div style={{ background: '#1e1e24', borderRadius: 12, padding: 16, marginTop: 8 }}>
+            <div style={{ fontSize: 12, color: '#8a8894', marginBottom: 10 }}>Riepilogo richiesta:</div>
+            {[
+              ['Nome',         form.name],
+              ['Email',        form.email],
+              ['Location',     form.location],
+              ['Budget',       form.budget ? `€${form.budget}/mo` : ''],
+              ['Data entrata', form.entry_date],
+              ['Animali',      form.pets ? 'Sì' : 'No'],
+              ['Condivisione', form.share ? 'Sì' : 'No'],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ color: '#5a5866' }}>{k}</span>
+                <span style={{ color: v ? '#e8e6e1' : '#5a5866' }}>{v || '—'}</span>
+              </div>
+            ))}
+          </div>
+          {submitError && <div style={{ ...S.errBox, marginTop: 16 }}>{submitError}</div>}
+        </div>
+      )}
+
+      {/* Navigazione step */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+        {step > 1 && (
+          <button style={S.btn} onClick={() => { setStep(s => s - 1); setSubmitError(null); }}>
+            ← Indietro
+          </button>
+        )}
+        {step < 3
+          ? <button style={S.btnPrim} onClick={() => setStep(s => s + 1)}>Avanti →</button>
+          : <button style={{ ...S.btnPrim, opacity: loading ? 0.7 : 1 }} onClick={submit} disabled={loading}>
+              {loading ? 'Invio in corso...' : 'Invia richiesta ✓'}
+            </button>
+        }
+      </div>
+    </div>
+  );
+};
+
+export default ExternalForm;
