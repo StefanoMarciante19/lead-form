@@ -335,6 +335,22 @@
     .form-step { animation: stepIn .22s ease; }
     @keyframes stepIn { from { opacity:0; transform:translateX(8px); } to { opacity:1; transform:none; } }
 
+    /* Pets description expand */
+    .pets-desc-wrap {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .35s ease, opacity .3s ease;
+    }
+    .pets-desc-wrap.open { max-height: 200px; opacity: 1; }
+
+    /* Field error state */
+    .fgroup.has-error input,
+    .fgroup.has-error select,
+    .fgroup.has-error textarea { border-bottom-color: #b94040; }
+    .fgroup.has-error label { color: #b94040; }
+
     /* ── MOBILE HEADER ── */
     .mobile-header { display: none; }
 
@@ -451,29 +467,55 @@
         <h1 class="step-heading">Tell us<br /><em>about yourself</em></h1>
         <p class="step-sub">Step 1 of 3 — Personal Information</p>
         <div class="grid">
-          <div class="fgroup">
+          <div class="fgroup" id="fg-name">
             <label>Full Name <span class="req">*</span></label>
             <input type="text" id="name" placeholder="John Smith" autocomplete="name" />
           </div>
-          <div class="fgroup">
+          <div class="fgroup" id="fg-email">
             <label>Email Address <span class="req">*</span></label>
             <input type="email" id="email" placeholder="john@email.com" autocomplete="email" />
           </div>
-          <div class="fgroup">
-            <label>Phone Number</label>
+          <div class="fgroup" id="fg-phone">
+            <label>Phone Number <span class="req">*</span></label>
             <input type="tel" id="phone" placeholder="+356 9900 0000" autocomplete="tel" />
           </div>
-          <div class="fgroup">
-            <label>Nationality</label>
-            <input type="text" id="nationality" placeholder="British, Italian…" />
+          <div class="fgroup" id="fg-nationality">
+            <label>Nationality <span class="req">*</span></label>
+            <select id="nationality">
+              <option value="">— Select —</option>
+              <option>Albanian</option><option>Algerian</option><option>American</option>
+              <option>Argentine</option><option>Australian</option><option>Austrian</option>
+              <option>Bangladeshi</option><option>Belgian</option><option>Brazilian</option>
+              <option>British</option><option>Bulgarian</option><option>Canadian</option>
+              <option>Chilean</option><option>Chinese</option><option>Colombian</option>
+              <option>Croatian</option><option>Czech</option><option>Danish</option>
+              <option>Dutch</option><option>Egyptian</option><option>Estonian</option>
+              <option>Finnish</option><option>French</option><option>German</option>
+              <option>Greek</option><option>Hungarian</option><option>Indian</option>
+              <option>Indonesian</option><option>Irish</option><option>Israeli</option>
+              <option>Italian</option><option>Japanese</option><option>Jordanian</option>
+              <option>Korean</option><option>Latvian</option><option>Lebanese</option>
+              <option>Lithuanian</option><option>Luxembourgish</option><option>Maltese</option>
+              <option>Mexican</option><option>Moroccan</option><option>New Zealander</option>
+              <option>Nigerian</option><option>Norwegian</option><option>Pakistani</option>
+              <option>Peruvian</option><option>Philippine</option><option>Polish</option>
+              <option>Portuguese</option><option>Romanian</option><option>Russian</option>
+              <option>Saudi Arabian</option><option>Serbian</option><option>Singaporean</option>
+              <option>Slovak</option><option>Slovenian</option><option>South African</option>
+              <option>Spanish</option><option>Swedish</option><option>Swiss</option>
+              <option>Thai</option><option>Tunisian</option><option>Turkish</option>
+              <option>Ukrainian</option><option>Uruguayan</option><option>Venezuelan</option>
+              <option>Vietnamese</option><option>Other</option>
+            </select>
           </div>
-          <div class="fgroup">
-            <label>Age</label>
-            <input type="number" id="age" value="30" min="18" max="99" />
+          <div class="fgroup" id="fg-age">
+            <label>Age <span class="req">*</span></label>
+            <input type="number" id="age" placeholder="30" min="18" max="99" />
           </div>
-          <div class="fgroup">
-            <label>Gender</label>
+          <div class="fgroup" id="fg-sex">
+            <label>Gender <span class="req">*</span></label>
             <select id="sex">
+              <option value="">— Select —</option>
               <option value="M">Male</option>
               <option value="F">Female</option>
               <option value="O">Prefer not to say</option>
@@ -490,43 +532,51 @@
         <h1 class="step-heading">Your<br /><em>requirements</em></h1>
         <p class="step-sub">Step 2 of 3 — Property Preferences</p>
         <div class="grid">
-          <div class="fgroup">
-            <label>Monthly Budget (€)</label>
-            <input type="number" id="budget" value="900" min="0" />
+          <div class="fgroup" id="fg-budget">
+            <label>Monthly Budget (€) <span class="req">*</span></label>
+            <input type="number" id="budget" placeholder="900" min="0" />
           </div>
-          <div class="fgroup">
-            <label>Preferred Area</label>
+          <div class="fgroup" id="fg-location">
+            <label>Preferred Area <span class="req">*</span></label>
             <input type="text" id="location" placeholder="St Julian's, Sliema…" />
           </div>
-          <div class="fgroup">
-            <label>Available From</label>
+          <div class="fgroup" id="fg-entry_date">
+            <label>Available From <span class="req">*</span></label>
             <input type="date" id="entry_date" />
           </div>
-          <div class="fgroup">
-            <label>Lease Duration</label>
+          <div class="fgroup" id="fg-lease">
+            <label>Lease Duration <span class="req">*</span></label>
             <select id="lease">
-              <option value="short">Short term (1–3 months)</option>
-              <option value="medium">Medium term (3–6 months)</option>
-              <option value="long" selected>Long term (6+ months)</option>
+              <option value="">— Select —</option>
+              <option value="long">Long term — 1 year+ contract</option>
+              <option value="short">Short term — under 1 year</option>
             </select>
           </div>
-          <div class="fgroup">
-            <label>Pets</label>
-            <select id="pets">
+          <div class="fgroup" id="fg-pets">
+            <label>Pets <span class="req">*</span></label>
+            <select id="pets" onchange="togglePetsDesc()">
+              <option value="">— Select —</option>
               <option value="false">No pets</option>
               <option value="true">Yes, I have pets</option>
             </select>
           </div>
-          <div class="fgroup">
-            <label>Occupancy Type</label>
+          <div class="fgroup" id="fg-share">
+            <label>Occupancy Type <span class="req">*</span></label>
             <select id="share">
+              <option value="">— Select —</option>
               <option value="true">Open to shared</option>
               <option value="false">Private / independent</option>
             </select>
           </div>
-          <div class="fgroup full">
-            <label>Furnished Preference</label>
+          <!-- Pets description — shown only when pets = yes -->
+          <div class="fgroup pets-desc-wrap" id="pets-desc-wrap">
+            <label>Describe your pets <span class="req">*</span></label>
+            <textarea id="pets_desc" placeholder="E.g. 1 small dog (Chihuahua, 4 kg), house-trained…" style="min-height:70px"></textarea>
+          </div>
+          <div class="fgroup full" id="fg-furnished">
+            <label>Furnished Preference <span class="req">*</span></label>
             <select id="furnished">
+              <option value="">— Select —</option>
               <option value="furnished">Fully furnished</option>
               <option value="semi">Semi-furnished</option>
               <option value="unfurnished">Unfurnished</option>
@@ -557,6 +607,7 @@
           <div class="summary-row"><span class="sk">Available From</span> <span class="sv" id="s-date">—</span></div>
           <div class="summary-row"><span class="sk">Lease Duration</span> <span class="sv" id="s-lease">—</span></div>
           <div class="summary-row"><span class="sk">Pets</span>           <span class="sv" id="s-pets">—</span></div>
+          <div class="summary-row" id="s-pets-desc-row" style="display:none"><span class="sk">Pet details</span> <span class="sv" id="s-pets-desc">—</span></div>
           <div class="summary-row"><span class="sk">Occupancy</span>      <span class="sv" id="s-share">—</span></div>
           <div class="summary-row"><span class="sk">Furnished</span>      <span class="sv" id="s-furnished">—</span></div>
         </div>
@@ -584,14 +635,69 @@
 
 <script>
   let currentStep = 1;
-  const leaseMap = { short:'Short term (1–3 mo)', medium:'Medium term (3–6 mo)', long:'Long term (6+ mo)' };
+  const leaseMap = { long:'Long term (1 year+)', short:'Short term (under 1 year)' };
   const furnMap  = { furnished:'Fully furnished', semi:'Semi-furnished', unfurnished:'Unfurnished', any:'No preference' };
   const v = id => document.getElementById(id).value.trim();
 
+  // ── Pets conditional field ──
+  function togglePetsDesc() {
+    const hasPets = document.getElementById('pets').value === 'true';
+    const wrap    = document.getElementById('pets-desc-wrap');
+    wrap.classList.toggle('open', hasPets);
+    if (!hasPets) document.getElementById('pets_desc').value = '';
+  }
+
+  // ── Validation helpers ──
+  function setError(id, on) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('has-error', on);
+  }
+
+  function validateStep1() {
+    const checks = [
+      { id: 'fg-name',        val: v('name') },
+      { id: 'fg-email',       val: v('email') },
+      { id: 'fg-phone',       val: v('phone') },
+      { id: 'fg-nationality', val: v('nationality') },
+      { id: 'fg-age',         val: v('age') },
+      { id: 'fg-sex',         val: v('sex') },
+    ];
+    let ok = true;
+    checks.forEach(({ id, val }) => {
+      const err = !val;
+      setError(id, err);
+      if (err) ok = false;
+    });
+    if (!ok) showToast('Please fill in all required fields', 'error');
+    return ok;
+  }
+
+  function validateStep2() {
+    const hasPets = document.getElementById('pets').value === 'true';
+    const checks = [
+      { id: 'fg-budget',     val: v('budget') },
+      { id: 'fg-location',   val: v('location') },
+      { id: 'fg-entry_date', val: v('entry_date') },
+      { id: 'fg-lease',      val: v('lease') },
+      { id: 'fg-pets',       val: v('pets') },
+      { id: 'fg-share',      val: v('share') },
+      { id: 'fg-furnished',  val: v('furnished') },
+    ];
+    if (hasPets) checks.push({ id: 'pets-desc-wrap', val: v('pets_desc') });
+    let ok = true;
+    checks.forEach(({ id, val }) => {
+      const err = !val;
+      setError(id, err);
+      if (err) ok = false;
+    });
+    if (!ok) showToast('Please fill in all required fields', 'error');
+    return ok;
+  }
+
+  // ── Step navigation ──
   function goStep(n) {
-    if (n === 2 && currentStep === 1) {
-      if (!v('name') || !v('email')) { showToast('Full name and email are required', 'error'); return; }
-    }
+    if (n === 2 && currentStep === 1 && !validateStep1()) return;
+    if (n === 3 && currentStep === 2 && !validateStep2()) return;
     document.getElementById('step' + currentStep).style.display = 'none';
     currentStep = n;
     const el = document.getElementById('step' + n);
@@ -615,22 +721,32 @@
   }
 
   function fillSummary() {
-    const budget = document.getElementById('budget').value;
+    const budget  = document.getElementById('budget').value;
+    const hasPets = document.getElementById('pets').value === 'true';
     document.getElementById('s-name').textContent      = v('name')       || '—';
     document.getElementById('s-email').textContent     = v('email')      || '—';
     document.getElementById('s-location').textContent  = v('location')   || '—';
     document.getElementById('s-budget').textContent    = budget ? '€' + Number(budget).toLocaleString() + ' / mo' : '—';
     document.getElementById('s-date').textContent      = v('entry_date') || '—';
     document.getElementById('s-lease').textContent     = leaseMap[document.getElementById('lease').value] || '—';
-    document.getElementById('s-pets').textContent      = document.getElementById('pets').value === 'true' ? 'Yes' : 'No';
+    document.getElementById('s-pets').textContent      = hasPets ? 'Yes' : 'No';
     document.getElementById('s-share').textContent     = document.getElementById('share').value === 'true' ? 'Open to shared' : 'Private / independent';
     document.getElementById('s-furnished').textContent = furnMap[document.getElementById('furnished').value] || '—';
+    // Pets detail row
+    const petsRow = document.getElementById('s-pets-desc-row');
+    if (hasPets) {
+      document.getElementById('s-pets-desc').textContent = v('pets_desc') || '—';
+      petsRow.style.display = 'flex';
+    } else {
+      petsRow.style.display = 'none';
+    }
   }
 
   async function submitForm() {
     const btn = document.getElementById('submit-btn');
     const lbl = document.getElementById('submit-label');
     btn.disabled = true; lbl.textContent = 'Sending…';
+    const hasPets = document.getElementById('pets').value === 'true';
     const payload = {
       name: v('name'), email: v('email'), phone: v('phone'),
       nationality: v('nationality'),
@@ -639,7 +755,8 @@
       budget: +document.getElementById('budget').value,
       location: v('location'), entry_date: v('entry_date'),
       lease: document.getElementById('lease').value,
-      pets: document.getElementById('pets').value === 'true',
+      pets: hasPets,
+      pets_desc: hasPets ? v('pets_desc') : '',
       share: document.getElementById('share').value === 'true',
       furnished: document.getElementById('furnished').value,
       notes: v('notes'),
@@ -671,10 +788,12 @@
 
   function resetForm() {
     document.querySelectorAll('input,select,textarea').forEach(el => {
-      if (el.type === 'number') el.value = el.id === 'age' ? 30 : 900;
-      else if (el.tagName === 'SELECT') el.selectedIndex = el.id === 'lease' ? 2 : 0;
+      if (el.type === 'number') el.value = '';
+      else if (el.tagName === 'SELECT') el.selectedIndex = 0;
       else el.value = '';
     });
+    document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
+    document.getElementById('pets-desc-wrap').classList.remove('open');
     document.getElementById('success-screen').classList.remove('show');
     document.getElementById('step1').style.display = 'block';
     [2,3].forEach(i => document.getElementById('step'+i).style.display = 'none');
